@@ -4,12 +4,32 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MapPin, Mic, Lock, ShieldCheck } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { motion } from 'motion/react';
+import { useFirebase } from '@/components/FirebaseProvider';
+import { useRouter } from 'next/navigation';
 
 export default function WelcomePage() {
   const [locationEnabled, setLocationEnabled] = useState(true);
   const [micEnabled, setMicEnabled] = useState(false);
+  const { user, signIn, loading } = useFirebase();
+  const router = useRouter();
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex w-full h-full justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  // If user is logged in, they can "Continue to Map"
+  const handleSignIn = async () => {
+    if (!user) {
+      await signIn();
+    } else {
+      router.push('/map');
+    }
+  };
 
   return (
     <div className="flex-1 flex flex-col w-full h-full pb-safe">
@@ -107,12 +127,20 @@ export default function WelcomePage() {
           </div>
         </motion.div>
 
-        <div className="mt-auto pt-4">
-          <Link href="/verify" className="w-full bg-primary hover:bg-[#0fa64d] active:scale-[0.98] transition-all duration-200 text-text-main hover:text-black font-bold text-lg py-4 px-6 rounded-xl shadow-[0_4px_14px_0_rgba(19,236,106,0.39)] flex items-center justify-center gap-2">
-            <ShieldCheck size={20} className="fill-current text-white/50" />
-            Secure My Trip
-          </Link>
-          <p className="text-center mt-4 text-xs text-gray-400 dark:text-gray-500 flex items-center justify-center gap-1">
+        <div className="mt-auto pt-4 flex flex-col gap-3">
+          {user ? (
+            <Link href="/verify" className="w-full bg-primary hover:bg-[#0fa64d] active:scale-[0.98] transition-all duration-200 text-text-main hover:text-black font-bold text-lg py-4 px-6 rounded-xl shadow-[0_4px_14px_0_rgba(19,236,106,0.39)] flex items-center justify-center gap-2">
+              <ShieldCheck size={20} className="fill-current text-white/50" />
+              Start New Trip
+            </Link>
+          ) : (
+            <button onClick={handleSignIn} className="w-full bg-primary hover:bg-[#0fa64d] active:scale-[0.98] transition-all duration-200 text-text-main hover:text-black font-bold text-lg py-4 px-6 rounded-xl shadow-[0_4px_14px_0_rgba(19,236,106,0.39)] flex items-center justify-center gap-2">
+              <ShieldCheck size={20} className="fill-current text-white/50" />
+              Sign in with Google
+            </button>
+          )}
+
+          <p className="text-center mt-2 text-xs text-gray-400 dark:text-gray-500 flex items-center justify-center gap-1">
             <Lock size={12} />
             Your data is encrypted and private.
           </p>

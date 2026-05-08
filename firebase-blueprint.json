@@ -1,0 +1,85 @@
+{
+  "entities": {
+    "UserPublic": {
+      "title": "UserPublic",
+      "description": "Public profile details.",
+      "type": "object",
+      "properties": {
+        "username": { "type": "string" },
+        "avatarUrl": { "type": "string" }
+      },
+      "required": ["username", "avatarUrl"]
+    },
+    "UserPrivate": {
+      "title": "UserPrivate",
+      "description": "Private PII and medical info.",
+      "type": "object",
+      "properties": {
+        "bloodType": { "type": "string" },
+        "allergies": { "type": "string" },
+        "chronicConditions": { "type": "string" }
+      },
+      "required": ["bloodType", "allergies", "chronicConditions"]
+    },
+    "EmergencyContact": {
+      "title": "EmergencyContact",
+      "description": "An emergency contact belonging to a user.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "relationship": { "type": "string" }
+      },
+      "required": ["name", "phoneNumber", "relationship"]
+    },
+    "Trip": {
+      "title": "Trip",
+      "description": "A safety trip created by a user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "status": { "type": "string", "enum": ["planned", "active", "completed", "caution", "sos"] },
+        "startTime": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "title", "status", "createdAt", "updatedAt"]
+    },
+    "LiveLocation": {
+      "title": "LiveLocation",
+      "description": "Live GPS ping for an active trip.",
+      "type": "object",
+      "properties": {
+        "lat": { "type": "number" },
+        "lng": { "type": "number" },
+        "battery": { "type": "number" },
+        "signal": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["lat", "lng", "battery", "signal", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/public/profile": {
+      "schema": { "$ref": "#/entities/UserPublic" },
+      "description": "Public user profile."
+    },
+    "/users/{userId}/private/info": {
+      "schema": { "$ref": "#/entities/UserPrivate" },
+      "description": "Private user medical info."
+    },
+    "/users/{userId}/emergencyContacts/{contactId}": {
+      "schema": { "$ref": "#/entities/EmergencyContact" },
+      "description": "A contact."
+    },
+    "/trips/{tripId}": {
+      "schema": { "$ref": "#/entities/Trip" },
+      "description": "Trip info."
+    },
+    "/trips/{tripId}/liveLocations/{locationId}": {
+      "schema": { "$ref": "#/entities/LiveLocation" },
+      "description": "Trip live location points."
+    }
+  }
+}

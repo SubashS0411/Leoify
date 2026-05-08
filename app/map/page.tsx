@@ -1,11 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import { BottomNav } from '@/components/BottomNav';
-import { Search, SlidersHorizontal, ShieldCheck, Footprints, Plus, Minus, Navigation, MapPin, Bell } from 'lucide-react';
+import { Search, SlidersHorizontal, ShieldCheck, Footprints, Plus, Minus, Navigation, MapPin, Bell, X, Compass } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function MapPage() {
+  const [selectedHaven, setSelectedHaven] = useState(false);
+
   return (
     <div className="flex-1 flex flex-col h-full w-full overflow-hidden relative">
       <div className="absolute inset-0 w-full h-full z-0 overflow-hidden bg-slate-200">
@@ -38,8 +42,11 @@ export default function MapPage() {
           </div>
 
           {/* Safe Haven */}
-          <div className="absolute top-[45%] left-[45%] pointer-events-auto cursor-pointer group -translate-x-1/2 -translate-y-full hover:z-50 hover:scale-110 transition-all">
-            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-xl border-2 border-white animate-bounce">
+          <div 
+             className="absolute top-[45%] left-[45%] pointer-events-auto cursor-pointer group -translate-x-1/2 -translate-y-full transition-all"
+             onClick={() => setSelectedHaven(true)}
+          >
+            <div className={`w-12 h-12 bg-primary rounded-full flex items-center justify-center shadow-xl border-2 border-white ${!selectedHaven ? 'animate-bounce' : 'scale-110'}`}>
               <ShieldCheck size={24} className="text-background-dark fill-background-dark/20" />
             </div>
           </div>
@@ -95,6 +102,66 @@ export default function MapPage() {
 
       <div className="absolute bottom-[72px] w-full h-16 bg-gradient-to-t from-background-light/90 dark:from-background-dark/90 to-transparent pointer-events-none z-30"></div>
       
+      <AnimatePresence>
+        {selectedHaven && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.95 }}
+            className="absolute bottom-24 left-4 right-4 z-50 pointer-events-auto bg-white dark:bg-slate-800 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-slate-100 dark:border-slate-700 overflow-hidden"
+          >
+            <div className="relative h-32 w-full">
+              <Image 
+                src="https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=800&auto=format&fit=crop"
+                alt="Hospital"
+                fill
+                className="object-cover"
+              />
+              <button 
+                onClick={() => setSelectedHaven(false)}
+                className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center bg-black/40 backdrop-blur-md text-white rounded-full hover:bg-black/60 transition-colors"
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+              <div className="absolute top-3 left-3 bg-primary text-black px-2 py-1 rounded shadow text-xs font-bold flex items-center gap-1">
+                <ShieldCheck size={14} /> Safe Haven
+              </div>
+            </div>
+            
+            <div className="p-4 flex flex-col gap-3">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white leading-tight">City General Hospital</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1">
+                  <MapPin size={14} /> 123 Health Ave, Medical District
+                </p>
+              </div>
+              
+              <div className="flex gap-4 mb-1">
+                <div className="flex flex-col">
+                  <span className="text-xs text-slate-500 uppercase font-semibold">Hours</span>
+                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">Open 24/7</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs text-slate-500 uppercase font-semibold">Phone</span>
+                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">911 / (555) 123-4567</span>
+                </div>
+              </div>
+              
+              <div className="flex gap-3 mt-1">
+                <button className="flex-1 bg-primary hover:bg-[#0fa64d] text-black font-bold py-3 rounded-xl shadow-md flex items-center justify-center gap-2 active:scale-95 transition-all">
+                  <Compass size={18} />
+                  Navigate
+                </button>
+                <button className="w-[48px] h-auto flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-600 active:scale-95 transition-all">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <BottomNav />
     </div>
   );

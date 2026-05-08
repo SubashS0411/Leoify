@@ -1,0 +1,121 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitives
+    function isSignedIn() { return request.auth != null; }
+    function isVerified() { return isSignedIn() && request.auth.token.email_verified == true; }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+
+    // User Public Validation
+    function isValidUserPublic(data) {
+      return data.keys().hasAll(['username', 'avatarUrl']) 
+        && data.keys().size() == 2
+        && data.username is string && data.username.size() <= 64
+        && data.avatarUrl is string && data.avatarUrl.size() <= 512;
+    }
+
+    // User Private Validation
+    function isValidUserPrivate(data) {
+      return data.keys().hasAll(['bloodType', 'allergies', 'chronicConditions'])
+        && data.keys().size() == 3
+        && data.bloodType is string && data.bloodType.size() <= 10
+        && data.allergies is string && data.allergies.size() <= 1000
+        && data.chronicConditions is string && data.chronicConditions.size() <= 1000;
+    }
+
+    // Emergency Contact Validation
+    function isValidContact(data) {
+      return data.keys().hasAll(['name', 'phoneNumber', 'relationship'])
+        && data.keys().size() == 3
+        && data.name is string && data.name.size() <= 128
+        && data.phoneNumber is string && data.phoneNumber.size() <= 32
+        && data.relationship is string && data.relationship.size() <= 64;
+    }
+
+    // Trip Validation
+    function isValidTripCreate(data) {
+      return data.keys().hasAll(['userId', 'title', 'status', 'createdAt', 'updatedAt'])
+        && data.keys().size() == 5
+        && data.userId == request.auth.uid
+        && data.title is string && data.title.size() <= 256
+        && data.status is string && data.status in ['planned', 'active', 'completed', 'caution', 'sos']
+        && data.createdAt == request.time
+        && data.updatedAt == request.time;
+    }
+
+    function isValidTripUpdate(data) {
+      return data.title is string && data.title.size() <= 256
+        && data.status is string && data.status in ['planned', 'active', 'completed', 'caution', 'sos']
+        && data.updatedAt == request.time;
+    }
+
+    // Live Location Validation
+    function isValidLiveLocC(data) {
+      return data.keys().hasAll(['lat', 'lng', 'battery', 'signal', 'timestamp'])
+        && data.keys().size() == 5
+        && data.lat is number
+        && data.lng is number
+        && data.battery is number
+        && data.signal is string && data.signal.size() <= 32
+        && data.timestamp == request.time;
+    }
+
+    // Collections
+    match /users/{userId} {
+      match /public/profile {
+        // Read: Any verified user could read another user's public info, or maybe just self
+        allow read: if isVerified();
+        allow create: if isVerified() && isValidId(userId) && request.auth.uid == userId && isValidUserPublic(incoming());
+        allow update: if isVerified() && request.auth.uid == userId 
+          && isValidUserPublic(incoming())
+          && incoming().diff(existing()).affectedKeys().hasOnly(['username', 'avatarUrl']);
+      }
+      
+      match /private/info {
+        allow read: if isVerified() && request.auth.uid == userId;
+        allow create: if isVerified() && isValidId(userId) && request.auth.uid == userId && isValidUserPrivate(incoming());
+        allow update: if isVerified() && request.auth.uid == userId
+          && isValidUserPrivate(incoming())
+          && incoming().diff(existing()).affectedKeys().hasOnly(['bloodType', 'allergies', 'chronicConditions']);
+      }
+
+      match /emergencyContacts/{contactId} {
+        allow read: if isVerified() && request.auth.uid == userId;
+        allow create: if isVerified() && isValidId(userId) && isValidId(contactId) && request.auth.uid == userId && isValidContact(incoming());
+        allow update: if isVerified() && request.auth.uid == userId
+          && isValidContact(incoming())
+          && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phoneNumber', 'relationship']);
+        allow delete: if isVerified() && request.auth.uid == userId;
+      }
+    }
+
+    match /trips/{tripId} {
+      allow read: if isVerified() && existing().userId == request.auth.uid;
+      allow create: if isVerified() && isValidId(tripId) && isValidTripCreate(incoming());
+      allow update: if isVerified() && existing().userId == request.auth.uid
+        && incoming().userId == existing().userId
+        && incoming().createdAt == existing().createdAt
+        && isValidTripUpdate(incoming())
+        && (
+          (incoming().diff(existing()).affectedKeys().hasOnly(['title', 'updatedAt'])) ||
+          (incoming().diff(existing()).affectedKeys().hasOnly(['status', 'updatedAt']) && existing().status != 'completed') ||
+          (incoming().diff(existing()).affectedKeys().hasOnly(['title', 'status', 'updatedAt']) && existing().status != 'completed')
+        );
+
+      match /liveLocations/{locId} {
+        allow read: if isVerified() && get(/databases/$(database)/documents/trips/$(tripId)).data.userId == request.auth.uid;
+        allow create: if isVerified() && isValidId(locId) 
+          && get(/databases/$(database)/documents/trips/$(tripId)).data.userId == request.auth.uid
+          && isValidLiveLocC(incoming());
+      }
+    }
+  }
+}
