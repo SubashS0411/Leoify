@@ -1,42 +1,20 @@
 @import "tailwindcss";
 
 @theme {
+  --color-background-light: #f8fafc;
+  --color-background-dark: #0f172a;
   --color-primary: #13ec6a;
-  --color-primary-dark: #0fa64d;
-  --color-background-light: #f6f8f7;
-  --color-background-dark: #102217;
-  --color-safe-green: #13ec6a;
-  --color-alert-red: #FF4B4B;
-  --color-text-main: #0d1b13;
-  --color-text-muted: #6b7280;
-  --color-caution: #f59e0b;
-  --color-caution-bg: #fef3c7;
-  --color-danger: #dc2626;
-  --color-danger-light: #FFF5F5;
-  --color-danger-dark: #2A0A0A;
-  --color-surface-light: #ffffff;
-  --color-surface-dark: #1c2e24;
-}
-
-@layer utilities {
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom, 20px);
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
+  --color-danger-light: #fee2e2;
+  --color-danger-dark: #7f1d1d;
+  --color-text-main: #1e293b;
 }
 
 body {
-  background-color: #e5e7eb;
+  @apply bg-background-light dark:bg-background-dark text-text-main dark:text-white antialiased overflow-x-hidden;
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
-    background-color: #000000;
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
