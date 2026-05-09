@@ -1,13 +1,59 @@
 'use client';
 
-import { useState } from 'react';
-import { Mic, ChevronRight } from 'lucide-react';
-import { motion, useDragControls } from 'motion/react';
+import { useState, useEffect } from 'react';
+import { Mic, ChevronRight, WifiOff, CheckCircle } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useRouter } from 'next/navigation';
 
 export default function SOSPage() {
   const router = useRouter();
   const [slideStatus, setSlideStatus] = useState(0);
+  const [isOffline, setIsOffline] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<'queued' | 'syncing' | 'synced'>('queued');
+
+  useEffect(() => {
+    // Check initial status
+    setIsOffline(!navigator.onLine);
+    if (navigator.onLine) {
+      setSyncStatus('synced');
+    }
+
+    const handleOnline = () => {
+      setIsOffline(false);
+      setSyncStatus('syncing');
+      
+      // Simulate sync delay
+      setTimeout(() => {
+        setSyncStatus('synced');
+        
+        // Use Notification API if available and permitted to inform user
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('Connection Restored', {
+            body: 'Your SOS alert has been successfully transmitted to authorities.',
+            icon: '/icon.png'
+          });
+        }
+      }, 1500);
+    };
+    
+    const handleOffline = () => {
+      setIsOffline(true);
+      setSyncStatus('queued');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Prompt for notification permission early for later use
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   return (
     <div className="relative flex h-full w-full flex-col bg-danger-light dark:bg-danger-dark overflow-hidden flex-1">
@@ -22,45 +68,79 @@ export default function SOSPage() {
 
       <div className="relative z-10 flex flex-col flex-grow items-center justify-between p-6 w-full h-full pb-safe">
         
-        <div className="flex-1"></div>
+        <div className="flex-1 w-full flex justify-center pt-2">
+          {/* Offline / Sync Banner */}
+          {isOffline ? (
+            <motion.div 
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="bg-yellow-500 text-black px-4 py-2 rounded-full flex items-center gap-2 font-bold text-sm shadow-lg h-fit"
+            >
+              <WifiOff size={16} />
+              OFFLINE - SOS QUEUED
+            </motion.div>
+          ) : syncStatus === 'syncing' ? (
+            <motion.div 
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="bg-blue-500 text-white px-4 py-2 rounded-full flex items-center gap-2 font-bold text-sm shadow-lg h-fit"
+            >
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              SYNCING SOS...
+            </motion.div>
+          ) : syncStatus === 'synced' ? (
+            <motion.div 
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="bg-green-500 text-white px-4 py-2 rounded-full flex items-center gap-2 font-bold text-sm shadow-lg h-fit"
+            >
+              <CheckCircle size={16} />
+              SOS TRANSMITTED
+            </motion.div>
+          ) : null}
+        </div>
 
         {/* Central Component */}
         <div className="flex flex-col items-center w-full">
           <div className="relative flex items-center justify-center w-64 h-64 mb-8">
-            <div className="absolute inset-0 rounded-full border border-red-500/20 bg-red-500/5 scale-125 dark:border-red-500/10 animate-[pulse_3s_infinite]"></div>
-            <div className="absolute inset-8 rounded-full border border-red-500/30 bg-red-500/10 scale-110 dark:border-red-500/20 animate-[pulse_2s_infinite]"></div>
-            <div className="absolute inset-16 rounded-full border border-red-500/40 bg-red-500/15 dark:border-red-500/30 animate-[pulse_1s_infinite]"></div>
+            <div className={`absolute inset-0 rounded-full border border-red-500/20 bg-red-500/5 scale-125 dark:border-red-500/10 ${isOffline ? '' : 'animate-[pulse_3s_infinite]'}`}></div>
+            <div className={`absolute inset-8 rounded-full border border-red-500/30 bg-red-500/10 scale-110 dark:border-red-500/20 ${isOffline ? '' : 'animate-[pulse_2s_infinite]'}`}></div>
+            <div className={`absolute inset-16 rounded-full border border-red-500/40 bg-red-500/15 dark:border-red-500/30 ${isOffline ? '' : 'animate-[pulse_1s_infinite]'}`}></div>
             
             <motion.div 
                initial={{ scale: 0.8 }}
-               animate={{ scale: 1 }}
-               transition={{ repeat: Infinity, repeatType: 'reverse', duration: 1 }}
-               className="relative z-10 flex items-center justify-center w-28 h-28 bg-red-600 rounded-full shadow-2xl shadow-red-500/40 ring-4 ring-white dark:ring-danger-dark"
+               animate={{ scale: isOffline ? 1 : [1, 1.05, 1] }}
+               transition={isOffline ? {} : { repeat: Infinity, duration: 1.5 }}
+               className={`relative z-10 flex items-center justify-center w-28 h-28 rounded-full shadow-2xl ring-4 ring-white dark:ring-danger-dark ${isOffline ? 'bg-red-800 shadow-red-900/40' : 'bg-red-600 shadow-red-500/40'}`}
             >
-              <Mic size={48} className="text-white fill-current" />
+              <Mic size={48} className={`text-white fill-current ${isOffline ? 'opacity-50' : ''}`} />
               
-              <div className="absolute -bottom-3 px-3 py-1 bg-white dark:bg-neutral-800 rounded-full shadow-md flex items-center gap-1.5 border border-red-100 dark:border-neutral-700">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-                </span>
-                <span className="text-[10px] font-bold text-red-600 dark:text-red-400 tracking-wider">LIVE</span>
-              </div>
+              {!isOffline && (
+                <div className="absolute -bottom-3 px-3 py-1 bg-white dark:bg-neutral-800 rounded-full shadow-md flex items-center gap-1.5 border border-red-100 dark:border-neutral-700">
+                  <span className="relative flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
+                  </span>
+                  <span className="text-[10px] font-bold text-red-600 dark:text-red-400 tracking-wider">LIVE</span>
+                </div>
+              )}
             </motion.div>
           </div>
 
           <h1 className="text-text-main dark:text-white tracking-tight text-[36px] font-black leading-tight text-center mb-2 drop-shadow-sm">
-            SOS ACTIVATED
+            {isOffline ? 'SOS QUEUED' : 'SOS ACTIVATED'}
           </h1>
           
           <div className="max-w-[280px]">
             <p className="text-neutral-600 dark:text-neutral-300 text-lg font-medium leading-normal text-center">
-              Notifying nearest authorities. Your location is being live-streamed.
+              {isOffline 
+                ? 'No network connection. Your alert and location are saved and will transmit automatically once connected.' 
+                : 'Notifying nearest authorities. Your location is being live-streamed.'}
             </p>
           </div>
         </div>
 
-        <div className="flex-1"></div>
+        <div className="flex-1 border border-solid border-transparent mt-4 mb-4" id="placeholder"></div>
 
         {/* Footer */}
         <div className="w-full pb-8">
@@ -78,7 +158,7 @@ export default function SOSPage() {
                dragMomentum={false}
                onDragEnd={(e, info) => {
                  if (info.offset.x > 200) {
-                   router.push('/home');
+                   router.push('/map');
                  } else {
                    setSlideStatus(0);
                  }
