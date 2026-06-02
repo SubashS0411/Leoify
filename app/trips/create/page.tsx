@@ -219,6 +219,86 @@ export default function CreateTripFlow() {
                   
                   <div className="h-px w-full bg-slate-200 dark:bg-slate-800 my-2"></div>
 
+                  {/* Planned Path & Map Representation */}
+                  <div className="flex flex-col gap-3">
+                    <span className="text-xs text-slate-500 uppercase font-bold tracking-wider">Planned Path Preview</span>
+                    <div className="relative bg-slate-50 dark:bg-slate-950/60 rounded-xl p-4 border border-slate-100 dark:border-slate-800/80 overflow-hidden">
+                      {/* Stylized background grid pattern */}
+                      <div className="absolute inset-0 bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] dark:bg-[radial-gradient(#334155_1.5px,transparent_1.5px)] [background-size:16px_16px] opacity-40"></div>
+                      
+                      <div className="relative z-10 flex flex-col gap-4">
+                        {/* Interactive Visual Map Line */}
+                        <div className="flex items-center justify-between relative px-2 py-4">
+                          {/* Main background dashed path */}
+                          <div className="absolute left-6 right-6 top-1/2 -translate-y-1/2 h-0.5 border-t-2 border-dashed border-slate-300 dark:border-slate-700"></div>
+                          {/* Animated primary progress line path */}
+                          <motion.div 
+                            className="absolute left-6 top-1/2 -translate-y-1/2 h-0.5 bg-primary origin-left"
+                            initial={{ width: 0 }}
+                            animate={{ width: '100%' }}
+                            transition={{ duration: 1.5, ease: "easeInOut" }}
+                          />
+                          
+                          {/* Start Point */}
+                          <div className="flex flex-col items-center relative z-10">
+                            <motion.div 
+                              className="w-8 h-8 bg-white dark:bg-slate-800 rounded-full border-2 border-primary flex items-center justify-center shadow-sm"
+                              whileHover={{ scale: 1.1 }}
+                            >
+                              <div className="w-3 h-3 bg-primary rounded-full animate-ping absolute"></div>
+                              <div className="w-3 h-3 bg-primary rounded-full relative z-20"></div>
+                            </motion.div>
+                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 whitespace-nowrap">Current PING</span>
+                          </div>
+
+                          {/* Planned Route Progress Indicator (Center Checkpoint) */}
+                          <div className="flex flex-col items-center relative z-10">
+                            <motion.div 
+                              className="w-7 h-7 bg-white dark:bg-slate-800 rounded-full border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center shadow-sm"
+                              initial={{ borderColor: 'rgba(203, 213, 225, 1)' }}
+                              animate={{ borderColor: '#13ec6a' }}
+                              transition={{ delay: 0.7, duration: 0.5 }}
+                            >
+                              <svg className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3.5" d="M5 13l4 4L19 7"></path></svg>
+                            </motion.div>
+                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 mt-1 whitespace-nowrap">Checkpoint</span>
+                          </div>
+
+                          {/* End Destination node */}
+                          <div className="flex flex-col items-center relative z-10">
+                            <motion.div 
+                              className="w-8 h-8 bg-white dark:bg-slate-800 rounded-full border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center shadow-md animate-pulse"
+                              initial={{ scale: 0.8 }}
+                              animate={{ scale: 1, borderColor: '#13ec6a' }}
+                              transition={{ type: 'spring', delay: 1.2 }}
+                            >
+                              <MapPin size={15} className="text-primary fill-primary/10" />
+                            </motion.div>
+                            <span className="text-[10px] font-bold text-slate-800 dark:text-white mt-1 whitespace-nowrap max-w-[80px] overflow-hidden text-ellipsis">{title || 'Destination'}</span>
+                          </div>
+                        </div>
+
+                        {/* Interactive mini elevation map visual */}
+                        <div className="h-12 flex items-end justify-between px-2 gap-1 overflow-hidden pointer-events-none relative pt-2">
+                          <div className="absolute top-0 left-2 text-[9px] font-semibold text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                             Simulated Elevation Tracking
+                          </div>
+                          {[20, 25, 45, 60, 30, 25, 40, 55, 75, 90, 60, 40, 30, 50, 70, 85, 35, 10].map((height, idx) => (
+                            <motion.div 
+                              key={idx}
+                              className="bg-primary/20 rounded-t w-full"
+                              initial={{ height: 0 }}
+                              animate={{ height: `${height}%` }}
+                              transition={{ delay: 0.05 * idx, duration: 0.4 }}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="h-px w-full bg-slate-200 dark:bg-slate-800 my-2"></div>
+
                   <div className="flex flex-col gap-3">
                     <span className="text-xs text-slate-500 uppercase font-bold tracking-wider">Selected Contacts</span>
                     {selectedContacts.length === 0 ? (

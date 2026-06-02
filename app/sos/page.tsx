@@ -140,7 +140,7 @@ export default function SOSPage() {
           </div>
         </div>
 
-        <div className="flex-1 border border-solid border-transparent mt-4 mb-4" id="placeholder"></div>
+        <div className={`flex-1 w-full border border-solid rounded-xl mt-4 mb-4 transition-all ${!isOffline ? 'border-red-400/50 dark:border-red-500/40 animate-pulse bg-red-500/5 shadow-[0_0_20px_rgba(239,68,68,0.15)]' : 'border-transparent'}`} id="placeholder"></div>
 
         {/* Footer */}
         <div className="w-full pb-8">
